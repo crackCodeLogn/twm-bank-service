@@ -1,6 +1,7 @@
 package com.vv.personal.twm.bank.feign;
 
 import com.vv.personal.twm.artifactory.bank.Bank;
+import com.vv.personal.twm.artifactory.deposit.FixedDeposit;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,4 +24,14 @@ public interface MongoServiceFeign {
     @GetMapping("/mongo/bank/getBanks?field={field}&value={value}")
     String getBanks(@PathVariable("field") String field,
                     @PathVariable("value") String value);
+
+    @PostMapping("/mongo/fd/addFd")
+    String addFd(@RequestBody FixedDeposit newFd);
+
+    @PostMapping("/mongo/fd/deleteFd")
+    String deleteFd(@RequestBody String fdKey);
+
+    @GetMapping("/mongo/fd/getFds?field={field}&value={value}")
+    String getFds(@PathVariable("field") String field,
+                  @PathVariable("value") String value);
 }
