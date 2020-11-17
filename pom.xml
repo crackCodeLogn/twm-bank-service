@@ -81,6 +81,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.vv.personal</groupId>
+            <artifactId>twm-artifactory</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
