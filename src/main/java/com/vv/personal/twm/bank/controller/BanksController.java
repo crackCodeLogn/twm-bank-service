@@ -1,6 +1,6 @@
 package com.vv.personal.twm.bank.controller;
 
-import com.vv.personal.twm.artifactory.bank.Bank;
+import com.vv.personal.twm.artifactory.generated.bank.BankProto;
 import com.vv.personal.twm.bank.feign.MongoServiceFeign;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ public class BanksController {
     private MongoServiceFeign mongoServiceFeign;
 
     @PostMapping("/addBank")
-    public String addBank(@RequestBody Bank newBank) {
+    public String addBank(@RequestBody BankProto.Bank newBank) {
         LOGGER.info("Received new bank to be added to Mongo: {}", newBank);
         try {
             return mongoServiceFeign.addBank(newBank);

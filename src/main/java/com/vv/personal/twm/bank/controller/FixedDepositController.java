@@ -1,6 +1,6 @@
 package com.vv.personal.twm.bank.controller;
 
-import com.vv.personal.twm.artifactory.deposit.FixedDeposit;
+import com.vv.personal.twm.artifactory.generated.deposit.FixedDepositProto;
 import com.vv.personal.twm.bank.feign.MongoServiceFeign;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +20,12 @@ public class FixedDepositController {
     private MongoServiceFeign mongoServiceFeign;
 
     @PostMapping("/addFd")
-    public String addFd(@RequestBody FixedDeposit newFd) {
+    public String addFd(@RequestBody FixedDepositProto.FixedDeposit newFd) {
         LOGGER.info("Received new FD to be added to Mongo: {}", newFd);
         try {
             return mongoServiceFeign.addFd(newFd);
         } catch (Exception e) {
-            LOGGER.error("Failed to add {} to mongo! ", newFd.getKey(), e);
+            LOGGER.error("Failed to add {} to mongo! ", newFd.getUser() + newFd.getDepositAmount(), e);
         }
         return "FAILED";
     }

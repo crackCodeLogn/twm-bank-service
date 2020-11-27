@@ -1,7 +1,7 @@
 package com.vv.personal.twm.bank.feign;
 
-import com.vv.personal.twm.artifactory.bank.Bank;
-import com.vv.personal.twm.artifactory.deposit.FixedDeposit;
+import com.vv.personal.twm.artifactory.generated.bank.BankProto;
+import com.vv.personal.twm.artifactory.generated.deposit.FixedDepositProto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface MongoServiceFeign {
 
     @PostMapping("/mongo/bank/addBank")
-    String addBank(@RequestBody Bank newBank);
+    String addBank(@RequestBody BankProto.Bank newBank);
 
     @PostMapping("/mongo/bank/deleteBank")
     String deleteBank(@RequestBody String ifscToDelete);
@@ -26,7 +26,7 @@ public interface MongoServiceFeign {
                     @PathVariable("value") String value);
 
     @PostMapping("/mongo/fd/addFd")
-    String addFd(@RequestBody FixedDeposit newFd);
+    String addFd(@RequestBody FixedDepositProto.FixedDeposit newFd);
 
     @PostMapping("/mongo/fd/deleteFd")
     String deleteFd(@RequestBody String fdKey);
