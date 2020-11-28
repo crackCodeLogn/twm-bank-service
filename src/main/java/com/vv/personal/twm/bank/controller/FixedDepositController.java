@@ -43,14 +43,14 @@ public class FixedDepositController {
 
     //read
     @GetMapping("/getFds")
-    public String getFds(@RequestParam("field") String field,
-                         @RequestParam(value = "value", required = false) String value) {
+    public FixedDepositProto.FixedDepositList getFds(@RequestParam("field") String field,
+                                                     @RequestParam(value = "value", required = false) String value) {
         LOGGER.info("Received {} to list for field {}", value, field);
         try {
             return mongoServiceFeign.getFds(field, value);
         } catch (Exception e) {
             LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
         }
-        return "FAILED";
+        return FixedDepositProto.FixedDepositList.newBuilder().build();
     }
 }

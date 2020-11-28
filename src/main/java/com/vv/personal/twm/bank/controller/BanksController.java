@@ -43,14 +43,14 @@ public class BanksController {
 
     //read
     @GetMapping("/getBanks")
-    public String getBanks(@RequestParam("field") String field,
-                           @RequestParam(value = "value", required = false) String value) {
+    public BankProto.BankList getBanks(@RequestParam("field") String field,
+                                       @RequestParam(value = "value", required = false) String value) {
         LOGGER.info("Received {} to list for field {}", value, field);
         try {
             return mongoServiceFeign.getBanks(field, value);
         } catch (Exception e) {
             LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
         }
-        return "FAILED";
+        return BankProto.BankList.newBuilder().build();
     }
 }

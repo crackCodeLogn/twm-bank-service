@@ -22,8 +22,8 @@ public interface MongoServiceFeign {
     String deleteBank(@RequestBody String ifscToDelete);
 
     @GetMapping("/mongo/bank/getBanks?field={field}&value={value}")
-    String getBanks(@PathVariable("field") String field,
-                    @PathVariable("value") String value);
+    BankProto.BankList getBanks(@PathVariable("field") String field,
+                                @PathVariable("value") String value);
 
     @PostMapping("/mongo/fd/addFd")
     String addFd(@RequestBody FixedDepositProto.FixedDeposit newFd);
@@ -32,6 +32,6 @@ public interface MongoServiceFeign {
     String deleteFd(@RequestBody String fdKey);
 
     @GetMapping("/mongo/fd/getFds?field={field}&value={value}")
-    String getFds(@PathVariable("field") String field,
-                  @PathVariable("value") String value);
+    FixedDepositProto.FixedDepositList getFds(@PathVariable("field") String field,
+                                              @PathVariable("value") String value);
 }
