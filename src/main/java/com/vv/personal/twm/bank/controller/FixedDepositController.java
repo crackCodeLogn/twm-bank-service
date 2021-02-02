@@ -7,6 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author Vivek
  * @since 17/11/20
@@ -43,8 +47,8 @@ public class FixedDepositController {
 
     //read
     @GetMapping("/getFds")
-    public FixedDepositProto.FixedDepositList getFds(@RequestParam("field") String field,
-                                                     @RequestParam(value = "value", required = false) String value) {
+    public FixedDepositProto.FixedDepositList getFdsForApp(@RequestParam(value = "field", defaultValue = "", required = false) String field,
+                                                           @RequestParam(value = "value", required = false) String value) {
         LOGGER.info("Received {} to list for field {}", value, field);
         try {
             return mongoServiceFeign.getFds(field, value);
@@ -52,5 +56,18 @@ public class FixedDepositController {
             LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
         }
         return FixedDepositProto.FixedDepositList.newBuilder().build();
+    }
+
+    @GetMapping("/manual/getFds")
+    public List<String> getFdsForUser(@RequestParam(value = "field", defaultValue = "", required = false) String field,
+                                      @RequestParam(value = "value", required = false) String value) {
+        try {
+            return getFdsForApp(field, value).getFixedDepositsList().stream()
+                    .map(FixedDepositProto.FixedDeposit::toString)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
+        }
+        return new ArrayList<>();
     }
 }

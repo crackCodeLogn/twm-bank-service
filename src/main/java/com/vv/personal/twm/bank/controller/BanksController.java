@@ -7,6 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author Vivek
  * @since 17/11/20
@@ -43,8 +47,8 @@ public class BanksController {
 
     //read
     @GetMapping("/getBanks")
-    public BankProto.BankList getBanks(@RequestParam("field") String field,
-                                       @RequestParam(value = "value", required = false) String value) {
+    public BankProto.BankList getBanksForApp(@RequestParam("field") String field,
+                                             @RequestParam(value = "value", required = false) String value) {
         LOGGER.info("Received {} to list for field {}", value, field);
         try {
             return mongoServiceFeign.getBanks(field, value);
@@ -52,5 +56,19 @@ public class BanksController {
             LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
         }
         return BankProto.BankList.newBuilder().build();
+    }
+
+    //shifting from BankList to List<String> instead for web ui access - manual
+    @GetMapping("/manual/getBanks")
+    public List<String> getBanksForUser(@RequestParam(value = "field", defaultValue = "", required = false) String field,
+                                        @RequestParam(value = "value", required = false) String value) {
+        try {
+            return getBanksForApp(field, value).getBanksList().stream()
+                    .map(BankProto.Bank::toString)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
+        }
+        return new ArrayList<>();
     }
 }
