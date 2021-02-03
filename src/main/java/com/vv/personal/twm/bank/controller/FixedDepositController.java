@@ -1,6 +1,7 @@
 package com.vv.personal.twm.bank.controller;
 
 import com.vv.personal.twm.artifactory.generated.deposit.FixedDepositProto;
+import com.vv.personal.twm.bank.feign.CalcServiceFeign;
 import com.vv.personal.twm.bank.feign.MongoServiceFeign;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +24,29 @@ public class FixedDepositController {
     @Autowired
     private MongoServiceFeign mongoServiceFeign;
 
+    @Autowired
+    private CalcServiceFeign calcServiceFeign;
+
     @PostMapping("/addFd")
-    public String addFd(@RequestBody FixedDepositProto.FixedDeposit newFd) {
-        LOGGER.info("Received new FD to be added to Mongo: {}", newFd);
+    public String addFd(@RequestBody FixedDepositProto.FixedDeposit newFixedDeposit) {
+        LOGGER.info("Calculating end-date for new FD");
+        String endDate = calcServiceFeign.calcEndDate(newFixedDeposit.getStartDate(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
+
+        LOGGER.info("Calculating expected interest and amount for new FD");
+        FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcAmountAndInterest(newFixedDeposit.getDepositAmount(),
+                newFixedDeposit.getRateOfInterest(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
+
+        FixedDepositProto.FixedDeposit.Builder builder = FixedDepositProto.FixedDeposit.newBuilder();
+        builder.mergeFrom(newFixedDeposit);
+        builder.mergeFrom(computedAmountDetails);
+        builder.setEndDate(endDate);
+        newFixedDeposit = builder.build();
+
+        LOGGER.info("Received new FD to be added to Mongo: {}", newFixedDeposit);
         try {
-            return mongoServiceFeign.addFd(newFd);
+            return mongoServiceFeign.addFd(newFixedDeposit);
         } catch (Exception e) {
-            LOGGER.error("Failed to add {} to mongo! ", newFd.getUser() + newFd.getDepositAmount(), e);
+            LOGGER.error("Failed to add {} to mongo! ", newFixedDeposit.getUser() + newFixedDeposit.getDepositAmount(), e);
         }
         return "FAILED";
     }
