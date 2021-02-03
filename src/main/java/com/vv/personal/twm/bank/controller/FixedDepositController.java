@@ -68,7 +68,20 @@ public class FixedDepositController {
                                                            @RequestParam(value = "value", required = false) String value) {
         LOGGER.info("Received {} to list for field {}", value, field);
         try {
-            return mongoServiceFeign.getFds(field, value);
+            FixedDepositProto.FixedDepositList retrievedFdList = mongoServiceFeign.getFds(field, value);
+            FixedDepositProto.FixedDepositList.Builder fdBuilderList = FixedDepositProto.FixedDepositList.newBuilder();
+            fdBuilderList.mergeFrom(retrievedFdList);
+
+            FixedDepositProto.FixedDeposit.Builder aggregateFdEntry = FixedDepositProto.FixedDeposit.newBuilder();
+            double totalActiveDeposit = retrievedFdList.getFixedDepositsList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getDepositAmount).sum();
+            double totalExpectedInterest = retrievedFdList.getFixedDepositsList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedInterest).sum();
+            double totalExpectedAmount = retrievedFdList.getFixedDepositsList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedAmount).sum();
+            aggregateFdEntry.setDepositAmount(totalActiveDeposit);
+            aggregateFdEntry.setExpectedAmount(totalExpectedAmount);
+            aggregateFdEntry.setExpectedInterest(totalExpectedInterest);
+
+            fdBuilderList.addFixedDeposits(aggregateFdEntry.build());
+            return fdBuilderList.build();
         } catch (Exception e) {
             LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
         }
