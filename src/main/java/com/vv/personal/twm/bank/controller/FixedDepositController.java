@@ -35,12 +35,7 @@ public class FixedDepositController {
         LOGGER.info("Calculating expected interest and amount for new FD");
         FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcAmountAndInterest(newFixedDeposit.getDepositAmount(),
                 newFixedDeposit.getRateOfInterest(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
-
-        FixedDepositProto.FixedDeposit.Builder builder = FixedDepositProto.FixedDeposit.newBuilder();
-        builder.mergeFrom(newFixedDeposit);
-        builder.mergeFrom(computedAmountDetails);
-        builder.setEndDate(endDate);
-        newFixedDeposit = builder.build();
+        newFixedDeposit = compAndMerge(newFixedDeposit, computedAmountDetails, endDate);
 
         LOGGER.info("Received new FD to be added to Mongo: {}", newFixedDeposit);
         try {
@@ -52,7 +47,7 @@ public class FixedDepositController {
     }
 
     @PostMapping("/deleteFd")
-    public String deleteBank(@RequestBody String fdKey) {
+    public String deleteFd(@RequestBody String fdKey) {
         LOGGER.info("Received FD-KEY to delete: {}", fdKey);
         try {
             return mongoServiceFeign.deleteFd(fdKey);
@@ -99,5 +94,34 @@ public class FixedDepositController {
             LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
         }
         return new ArrayList<>();
+    }
+
+    @GetMapping("/update")
+    public String updateFd(@RequestParam String fdKey) {
+        LOGGER.info("Received FD-KEY to update: {}. Calculating end-date, and expected interest & amount", fdKey);
+        try {
+            FixedDepositProto.FixedDeposit fixedDeposit = mongoServiceFeign.getFds("KEY", fdKey)
+                    .getFixedDepositsList()
+                    .get(0);
+
+            String endDate = calcServiceFeign.calcEndDate(fixedDeposit.getStartDate(), fixedDeposit.getMonths(), fixedDeposit.getDays());
+            FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcAmountAndInterest(fixedDeposit.getDepositAmount(),
+                    fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays());
+            fixedDeposit = compAndMerge(fixedDeposit, computedAmountDetails, endDate);
+
+            LOGGER.info("Going for mongo updation now for key: {}", fdKey);
+            return mongoServiceFeign.updateRecordByReplacing(fixedDeposit);
+        } catch (Exception e) {
+            LOGGER.error("Failed to complete update op for fd key: {}", fdKey);
+        }
+        return "FAILED";
+    }
+
+    private FixedDepositProto.FixedDeposit compAndMerge(FixedDepositProto.FixedDeposit fixedDeposit, FixedDepositProto.FixedDeposit computedAmountDetails, String endDate) {
+        FixedDepositProto.FixedDeposit.Builder builder = FixedDepositProto.FixedDeposit.newBuilder();
+        builder.mergeFrom(fixedDeposit);
+        builder.mergeFrom(computedAmountDetails);
+        builder.setEndDate(endDate);
+        return builder.build();
     }
 }

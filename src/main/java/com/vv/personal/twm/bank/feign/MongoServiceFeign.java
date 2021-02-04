@@ -31,6 +31,9 @@ public interface MongoServiceFeign {
     @PostMapping("/mongo/fd/deleteFd")
     String deleteFd(@RequestBody String fdKey);
 
+    @PostMapping("/mongo/fd/update-by-replacing")
+    String updateRecordByReplacing(@RequestBody FixedDepositProto.FixedDeposit fixedDeposit);
+
     @GetMapping("/mongo/fd/getFds?field={field}&value={value}")
     FixedDepositProto.FixedDepositList getFds(@PathVariable("field") String field,
                                               @PathVariable("value") String value);
