@@ -13,13 +13,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface CalcServiceFeign {
 
     @GetMapping("/calc/bank/fd/amount-interest?depositAmount={depositAmount}&rateOfInterest={rateOfInterest}&months={months}&days={days}")
-    FixedDepositProto.FixedDeposit calcAmountAndInterest(@PathVariable Double depositAmount,
-                                                         @PathVariable Double rateOfInterest,
-                                                         @PathVariable Integer months,
-                                                         @PathVariable Integer days);
+    FixedDepositProto.FixedDeposit calcFixedDepositAmountAndInterest(@PathVariable Double depositAmount,
+                                                                     @PathVariable Double rateOfInterest,
+                                                                     @PathVariable Integer months,
+                                                                     @PathVariable Integer days);
 
     @GetMapping("/calc/bank/fd/end-date?startDate={startDate}&months={months}&days={days}")
     String calcEndDate(@PathVariable("startDate") String startDate,
                        @PathVariable("months") Integer months,
                        @PathVariable("days") Integer days);
+
+    @GetMapping("/calc/bank/fd/amount-interest/annual?depositAmount={depositAmount}&rateOfInterest={rateOfInterest}&startDate={startDate}&endDate={endDate}")
+    FixedDepositProto.AnnualBreakdownList calcFixedDepositAnnualBreakdown(@PathVariable("depositAmount") Double depositAmount,
+                                                                          @PathVariable("rateOfInterest") Double rateOfInterest,
+                                                                          @PathVariable("startDate") String startDate,
+                                                                          @PathVariable("endDate") String endDate);
+
 }

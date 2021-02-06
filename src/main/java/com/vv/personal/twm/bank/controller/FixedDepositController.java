@@ -33,7 +33,7 @@ public class FixedDepositController {
         String endDate = calcServiceFeign.calcEndDate(newFixedDeposit.getStartDate(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
 
         LOGGER.info("Calculating expected interest and amount for new FD");
-        FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcAmountAndInterest(newFixedDeposit.getDepositAmount(),
+        FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcFixedDepositAmountAndInterest(newFixedDeposit.getDepositAmount(),
                 newFixedDeposit.getRateOfInterest(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
         newFixedDeposit = compAndMerge(newFixedDeposit, computedAmountDetails, endDate);
 
@@ -68,14 +68,14 @@ public class FixedDepositController {
             fdBuilderList.mergeFrom(retrievedFdList);
 
             FixedDepositProto.FixedDeposit.Builder aggregateFdEntry = FixedDepositProto.FixedDeposit.newBuilder();
-            double totalActiveDeposit = retrievedFdList.getFixedDepositsList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getDepositAmount).sum();
-            double totalExpectedInterest = retrievedFdList.getFixedDepositsList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedInterest).sum();
-            double totalExpectedAmount = retrievedFdList.getFixedDepositsList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedAmount).sum();
+            double totalActiveDeposit = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getDepositAmount).sum();
+            double totalExpectedInterest = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedInterest).sum();
+            double totalExpectedAmount = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedAmount).sum();
             aggregateFdEntry.setDepositAmount(totalActiveDeposit);
             aggregateFdEntry.setExpectedAmount(totalExpectedAmount);
             aggregateFdEntry.setExpectedInterest(totalExpectedInterest);
 
-            fdBuilderList.addFixedDeposits(aggregateFdEntry.build());
+            fdBuilderList.addFixedDeposit(aggregateFdEntry.build());
             return fdBuilderList.build();
         } catch (Exception e) {
             LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
@@ -87,7 +87,7 @@ public class FixedDepositController {
     public List<String> getFdsForUser(@RequestParam(value = "field", defaultValue = "", required = false) String field,
                                       @RequestParam(value = "value", required = false) String value) {
         try {
-            return getFdsForApp(field, value).getFixedDepositsList().stream()
+            return getFdsForApp(field, value).getFixedDepositList().stream()
                     .map(FixedDepositProto.FixedDeposit::toString)
                     .collect(Collectors.toList());
         } catch (Exception e) {
@@ -101,11 +101,11 @@ public class FixedDepositController {
         LOGGER.info("Received FD-KEY to update: {}. Calculating end-date, and expected interest & amount", fdKey);
         try {
             FixedDepositProto.FixedDeposit fixedDeposit = mongoServiceFeign.getFds("KEY", fdKey)
-                    .getFixedDepositsList()
+                    .getFixedDepositList()
                     .get(0);
 
             String endDate = calcServiceFeign.calcEndDate(fixedDeposit.getStartDate(), fixedDeposit.getMonths(), fixedDeposit.getDays());
-            FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcAmountAndInterest(fixedDeposit.getDepositAmount(),
+            FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcFixedDepositAmountAndInterest(fixedDeposit.getDepositAmount(),
                     fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays());
             fixedDeposit = compAndMerge(fixedDeposit, computedAmountDetails, endDate);
 
@@ -115,6 +115,50 @@ public class FixedDepositController {
             LOGGER.error("Failed to complete update op for fd key: {}", fdKey);
         }
         return "FAILED";
+    }
+
+    @GetMapping("/annual-breakdown")
+    public FixedDepositProto.FixedDepositList generateAnnualBreakdownForExistingFds(@RequestParam(value = "field", defaultValue = "", required = false) String field,
+                                                                                    @RequestParam(value = "value", required = false) String value) {
+        LOGGER.info("Will be generating annual breakdown for FDs matching {} x {}", field, value);
+        try {
+            FixedDepositProto.FixedDepositList retrievedFdList = mongoServiceFeign.getFds(field, value);
+            FixedDepositProto.FixedDepositList.Builder fdBuilderList = FixedDepositProto.FixedDepositList.newBuilder();
+
+            retrievedFdList.getFixedDepositList()
+                    .forEach(fixedDeposit -> {
+                        FixedDepositProto.FixedDeposit.Builder fdBuilder = FixedDepositProto.FixedDeposit.newBuilder();
+                        fdBuilder.mergeFrom(fixedDeposit);
+                        FixedDepositProto.AnnualBreakdownList annualBreakdownList = calcServiceFeign.calcFixedDepositAnnualBreakdown(fixedDeposit.getDepositAmount(),
+                                fixedDeposit.getRateOfInterest(), fixedDeposit.getStartDate(), fixedDeposit.getEndDate());
+                        fdBuilder.setAnnualBreakdownList(annualBreakdownList);
+                        fdBuilderList.addFixedDeposit(fdBuilder.build());
+                    });
+
+            /*
+            FixedDepositProto.FixedDeposit.Builder aggregateFdEntry = FixedDepositProto.FixedDeposit.newBuilder();
+            double totalActiveDeposit = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getDepositAmount).sum();
+            double totalExpectedInterest = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedInterest).sum();
+            double totalExpectedAmount = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedAmount).sum();
+            aggregateFdEntry.setDepositAmount(totalActiveDeposit);
+            aggregateFdEntry.setExpectedAmount(totalExpectedAmount);
+            aggregateFdEntry.setExpectedInterest(totalExpectedInterest);
+
+            fdBuilderList.addFixedDeposit(aggregateFdEntry.build());*/
+            LOGGER.info("Computed annual breakdown for {} FDs", fdBuilderList.getFixedDepositCount());
+            LOGGER.info(fdBuilderList.toString()); //TODO - demote to debug later
+            return fdBuilderList.build();
+        } catch (Exception e) {
+            LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
+        }
+        return FixedDepositProto.FixedDepositList.newBuilder().build();
+    }
+
+    @GetMapping("/manual/annual-breakdown")
+    public List<String> generateAnnualBreakdownForExistingFdsManually(@RequestParam(value = "field", defaultValue = "", required = false) String field,
+                                                                      @RequestParam(value = "value", required = false) String value) {
+        return generateAnnualBreakdownForExistingFds(field, value).getFixedDepositList().stream()
+                .map(FixedDepositProto.FixedDeposit::toString).collect(Collectors.toList());
     }
 
     private FixedDepositProto.FixedDeposit compAndMerge(FixedDepositProto.FixedDeposit fixedDeposit, FixedDepositProto.FixedDeposit computedAmountDetails, String endDate) {
