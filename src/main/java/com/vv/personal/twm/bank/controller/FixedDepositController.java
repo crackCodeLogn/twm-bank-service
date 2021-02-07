@@ -135,16 +135,6 @@ public class FixedDepositController {
                         fdBuilderList.addFixedDeposit(fdBuilder.build());
                     });
 
-            /*
-            FixedDepositProto.FixedDeposit.Builder aggregateFdEntry = FixedDepositProto.FixedDeposit.newBuilder();
-            double totalActiveDeposit = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getDepositAmount).sum();
-            double totalExpectedInterest = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedInterest).sum();
-            double totalExpectedAmount = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedAmount).sum();
-            aggregateFdEntry.setDepositAmount(totalActiveDeposit);
-            aggregateFdEntry.setExpectedAmount(totalExpectedAmount);
-            aggregateFdEntry.setExpectedInterest(totalExpectedInterest);
-
-            fdBuilderList.addFixedDeposit(aggregateFdEntry.build());*/
             LOGGER.info("Computed annual breakdown for {} FDs", fdBuilderList.getFixedDepositCount());
             LOGGER.info(fdBuilderList.toString()); //TODO - demote to debug later
             return fdBuilderList.build();
