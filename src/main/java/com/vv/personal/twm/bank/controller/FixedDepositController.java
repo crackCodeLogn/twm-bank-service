@@ -3,6 +3,7 @@ package com.vv.personal.twm.bank.controller;
 import com.vv.personal.twm.artifactory.generated.deposit.FixedDepositProto;
 import com.vv.personal.twm.bank.feign.CalcServiceFeign;
 import com.vv.personal.twm.bank.feign.MongoServiceFeign;
+import com.vv.personal.twm.ping.processor.Pinger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +28,16 @@ public class FixedDepositController {
     @Autowired
     private CalcServiceFeign calcServiceFeign;
 
+    @Autowired
+    private Pinger pinger;
+
     @PostMapping("/addFd")
     public String addFd(@RequestBody FixedDepositProto.FixedDeposit newFixedDeposit) {
         LOGGER.info("Calculating end-date for new FD");
+        if (!pinger.allEndPointsActive(calcServiceFeign, mongoServiceFeign)) {
+            LOGGER.error("All end-points not active. Will not trigger op! Check log");
+            return "END-POINTS NOT READY!";
+        }
         String endDate = calcServiceFeign.calcEndDate(newFixedDeposit.getStartDate(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
 
         LOGGER.info("Calculating expected interest and amount for new FD");
@@ -49,6 +57,10 @@ public class FixedDepositController {
     @PostMapping("/deleteFd")
     public String deleteFd(@RequestBody String fdKey) {
         LOGGER.info("Received FD-KEY to delete: {}", fdKey);
+        if (!pinger.allEndPointsActive(mongoServiceFeign)) {
+            LOGGER.error("All end-points not active. Will not trigger op! Check log");
+            return "END-POINTS NOT READY!";
+        }
         try {
             return mongoServiceFeign.deleteFd(fdKey);
         } catch (Exception e) {
@@ -62,6 +74,10 @@ public class FixedDepositController {
     public FixedDepositProto.FixedDepositList getFdsForApp(@RequestParam(value = "field", defaultValue = "", required = false) String field,
                                                            @RequestParam(value = "value", required = false) String value) {
         LOGGER.info("Received {} to list for field {}", value, field);
+        if (!pinger.allEndPointsActive(mongoServiceFeign)) {
+            LOGGER.error("All end-points not active. Will not trigger op! Check log");
+            return FixedDepositProto.FixedDepositList.newBuilder().build();
+        }
         try {
             FixedDepositProto.FixedDepositList retrievedFdList = mongoServiceFeign.getFds(field, value);
             FixedDepositProto.FixedDepositList.Builder fdBuilderList = FixedDepositProto.FixedDepositList.newBuilder();
@@ -99,6 +115,10 @@ public class FixedDepositController {
     @GetMapping("/update")
     public String updateFd(@RequestParam String fdKey) {
         LOGGER.info("Received FD-KEY to update: {}. Calculating end-date, and expected interest & amount", fdKey);
+        if (!pinger.allEndPointsActive(mongoServiceFeign, calcServiceFeign)) {
+            LOGGER.error("All end-points not active. Will not trigger op! Check log");
+            return "END-POINTS NOT READY!";
+        }
         try {
             FixedDepositProto.FixedDeposit fixedDeposit = mongoServiceFeign.getFds("KEY", fdKey)
                     .getFixedDepositList()
@@ -121,6 +141,10 @@ public class FixedDepositController {
     public FixedDepositProto.FixedDepositList generateAnnualBreakdownForExistingFds(@RequestParam(value = "field", defaultValue = "", required = false) String field,
                                                                                     @RequestParam(value = "value", required = false) String value) {
         LOGGER.info("Will be generating annual breakdown for FDs matching {} x {}", field, value);
+        if (!pinger.allEndPointsActive(mongoServiceFeign, calcServiceFeign)) {
+            LOGGER.error("All end-points not active. Will not trigger op! Check log");
+            return FixedDepositProto.FixedDepositList.newBuilder().build();
+        }
         try {
             FixedDepositProto.FixedDepositList retrievedFdList = mongoServiceFeign.getFds(field, value);
             FixedDepositProto.FixedDepositList.Builder fdBuilderList = FixedDepositProto.FixedDepositList.newBuilder();
