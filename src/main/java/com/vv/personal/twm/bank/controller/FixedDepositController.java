@@ -139,8 +139,9 @@ public class FixedDepositController {
 
     @GetMapping("/annual-breakdown")
     public FixedDepositProto.FixedDepositList generateAnnualBreakdownForExistingFds(@RequestParam(value = "field", defaultValue = "", required = false) String field,
-                                                                                    @RequestParam(value = "value", required = false) String value) {
-        LOGGER.info("Will be generating annual breakdown for FDs matching {} x {}", field, value);
+                                                                                    @RequestParam(value = "value", required = false) String value,
+                                                                                    @RequestParam(value = "excludeOnBankIfsc", required = false, defaultValue = "") String excludeOnBankIfsc) {
+        LOGGER.info("Will be generating annual breakdown for FDs matching {} x {} and exempting [{}]", field, value, excludeOnBankIfsc);
         if (!pinger.allEndPointsActive(mongoServiceFeign, calcServiceFeign)) {
             LOGGER.error("All end-points not active. Will not trigger op! Check log");
             return FixedDepositProto.FixedDepositList.newBuilder().build();
@@ -151,12 +152,16 @@ public class FixedDepositController {
 
             retrievedFdList.getFixedDepositList()
                     .forEach(fixedDeposit -> {
-                        FixedDepositProto.FixedDeposit.Builder fdBuilder = FixedDepositProto.FixedDeposit.newBuilder();
-                        fdBuilder.mergeFrom(fixedDeposit);
-                        FixedDepositProto.AnnualBreakdownList annualBreakdownList = calcServiceFeign.calcFixedDepositAnnualBreakdown(fixedDeposit.getDepositAmount(),
-                                fixedDeposit.getRateOfInterest(), fixedDeposit.getStartDate(), fixedDeposit.getEndDate());
-                        fdBuilder.setAnnualBreakdownList(annualBreakdownList);
-                        fdBuilderList.addFixedDeposit(fdBuilder.build());
+                        if (!fixedDeposit.getBankIFSC().matches(excludeOnBankIfsc)) {
+                            FixedDepositProto.FixedDeposit.Builder fdBuilder = FixedDepositProto.FixedDeposit.newBuilder();
+                            fdBuilder.mergeFrom(fixedDeposit);
+                            FixedDepositProto.AnnualBreakdownList annualBreakdownList = calcServiceFeign.calcFixedDepositAnnualBreakdown(fixedDeposit.getDepositAmount(),
+                                    fixedDeposit.getRateOfInterest(), fixedDeposit.getStartDate(), fixedDeposit.getEndDate());
+                            fdBuilder.setAnnualBreakdownList(annualBreakdownList);
+                            fdBuilderList.addFixedDeposit(fdBuilder.build());
+                        } else {
+                            LOGGER.info("Exempting FD '{}' as it's IFSC '{}' is to be exempted on basis of [{}]", fixedDeposit.getFdNumber(), fixedDeposit.getBankIFSC(), excludeOnBankIfsc);
+                        }
                     });
 
             LOGGER.info("Computed annual breakdown for {} FDs", fdBuilderList.getFixedDepositCount());
@@ -170,8 +175,9 @@ public class FixedDepositController {
 
     @GetMapping("/manual/annual-breakdown")
     public List<String> generateAnnualBreakdownForExistingFdsManually(@RequestParam(value = "field", defaultValue = "", required = false) String field,
-                                                                      @RequestParam(value = "value", required = false) String value) {
-        return generateAnnualBreakdownForExistingFds(field, value).getFixedDepositList().stream()
+                                                                      @RequestParam(value = "value", required = false) String value,
+                                                                      @RequestParam(value = "excludeOnBankIfsc", required = false, defaultValue = "") String excludeOnBankIfsc) {
+        return generateAnnualBreakdownForExistingFds(field, value, excludeOnBankIfsc).getFixedDepositList().stream()
                 .map(FixedDepositProto.FixedDeposit::toString).collect(Collectors.toList());
     }
 
