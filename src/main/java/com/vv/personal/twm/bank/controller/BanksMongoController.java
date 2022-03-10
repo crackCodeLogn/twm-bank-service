@@ -5,7 +5,12 @@ import com.vv.personal.twm.bank.feign.MongoServiceFeign;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +20,10 @@ import java.util.stream.Collectors;
  * @author Vivek
  * @since 17/11/20
  */
-@RestController("BankController")
-@RequestMapping("/banking/banks")
-public class BanksController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BanksController.class);
+@RestController("BankMongoController")
+@RequestMapping("/banking/banks/mongo")
+public class BanksMongoController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BanksMongoController.class);
 
     @Autowired
     private MongoServiceFeign mongoServiceFeign;

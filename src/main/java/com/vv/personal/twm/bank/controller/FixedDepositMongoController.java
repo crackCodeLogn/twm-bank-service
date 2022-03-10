@@ -7,7 +7,12 @@ import com.vv.personal.twm.ping.processor.Pinger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +22,10 @@ import java.util.stream.Collectors;
  * @author Vivek
  * @since 17/11/20
  */
-@RestController("FixedDepositController")
-@RequestMapping("/banking/fd")
-public class FixedDepositController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FixedDepositController.class);
+@RestController("FixedDepositMongoController")
+@RequestMapping("/banking/fd/mongo")
+public class FixedDepositMongoController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FixedDepositMongoController.class);
 
     @Autowired
     private MongoServiceFeign mongoServiceFeign;
