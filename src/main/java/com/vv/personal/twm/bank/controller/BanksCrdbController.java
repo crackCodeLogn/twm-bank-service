@@ -30,11 +30,11 @@ public class BanksCrdbController {
 
     @PostMapping("/addBank")
     public String addBank(@RequestBody BankProto.Bank newBank) {
-        LOGGER.info("Received new bank to be added to Mongo: {}", newBank);
+        LOGGER.info("Received new bank to be added to crdb: {}", newBank);
         try {
             return crdbServiceFeign.addBank(newBank);
         } catch (Exception e) {
-            LOGGER.error("Failed to add {} to mongo! ", newBank.getName(), e);
+            LOGGER.error("Failed to add {} to crdb! ", newBank.getName(), e);
         }
         return "FAILED";
     }
@@ -45,7 +45,7 @@ public class BanksCrdbController {
         try {
             return crdbServiceFeign.deleteBank(ifscToDelete);
         } catch (Exception e) {
-            LOGGER.error("Failed to delete IFSC: {} from mongo! ", ifscToDelete, e);
+            LOGGER.error("Failed to delete IFSC: {} from crdb! ", ifscToDelete, e);
         }
         return "FAILED";
     }
@@ -58,7 +58,7 @@ public class BanksCrdbController {
         try {
             return crdbServiceFeign.getBanks(field, value);
         } catch (Exception e) {
-            LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
+            LOGGER.error("Failed to list {}: {} from crdb! ", field, value, e);
         }
         return BankProto.BankList.newBuilder().build();
     }
@@ -72,7 +72,7 @@ public class BanksCrdbController {
                     .map(BankProto.Bank::toString)
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
+            LOGGER.error("Failed to list {}: {} from crdb! ", field, value, e);
         }
         return new ArrayList<>();
     }

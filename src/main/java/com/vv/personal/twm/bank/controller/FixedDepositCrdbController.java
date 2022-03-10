@@ -50,11 +50,11 @@ public class FixedDepositCrdbController {
                 newFixedDeposit.getRateOfInterest(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
         newFixedDeposit = compAndMerge(newFixedDeposit, computedAmountDetails, endDate);
 
-        LOGGER.info("Received new FD to be added to Mongo: {}", newFixedDeposit);
+        LOGGER.info("Received new FD to be added to crdb: {}", newFixedDeposit);
         try {
             return crdbServiceFeign.addFd(newFixedDeposit);
         } catch (Exception e) {
-            LOGGER.error("Failed to add {} to mongo! ", newFixedDeposit.getUser() + newFixedDeposit.getDepositAmount(), e);
+            LOGGER.error("Failed to add {} to crdb! ", newFixedDeposit.getUser() + newFixedDeposit.getDepositAmount(), e);
         }
         return "FAILED";
     }
@@ -69,7 +69,7 @@ public class FixedDepositCrdbController {
         try {
             return crdbServiceFeign.deleteFixedDeposit(fdKey);
         } catch (Exception e) {
-            LOGGER.error("Failed to delete FD-KEY: {} from mongo! ", fdKey, e);
+            LOGGER.error("Failed to delete FD-KEY: {} from crdb! ", fdKey, e);
         }
         return "FAILED";
     }
@@ -99,7 +99,7 @@ public class FixedDepositCrdbController {
             fdBuilderList.addFixedDeposit(aggregateFdEntry.build());
             return fdBuilderList.build();
         } catch (Exception e) {
-            LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
+            LOGGER.error("Failed to list {}: {} from crdb! ", field, value, e);
         }
         return FixedDepositProto.FixedDepositList.newBuilder().build();
     }
@@ -112,7 +112,7 @@ public class FixedDepositCrdbController {
                     .map(FixedDepositProto.FixedDeposit::toString)
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
+            LOGGER.error("Failed to list {}: {} from crdb! ", field, value, e);
         }
         return new ArrayList<>();
     }
@@ -134,7 +134,7 @@ public class FixedDepositCrdbController {
                     fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays());
             fixedDeposit = compAndMerge(fixedDeposit, computedAmountDetails, endDate);
 
-            LOGGER.info("Going for mongo updation now for key: {}", fdKey);
+            LOGGER.info("Going for crdb updation now for key: {}", fdKey);
             return crdbServiceFeign.updateRecordByReplacing(fixedDeposit);
         } catch (Exception e) {
             LOGGER.error("Failed to complete update op for fd key: {}", fdKey);
@@ -173,7 +173,7 @@ public class FixedDepositCrdbController {
             LOGGER.info(fdBuilderList.toString()); //TODO - demote to debug later
             return fdBuilderList.build();
         } catch (Exception e) {
-            LOGGER.error("Failed to list {}: {} from mongo! ", field, value, e);
+            LOGGER.error("Failed to list {}: {} from crdb! ", field, value, e);
         }
         return FixedDepositProto.FixedDepositList.newBuilder().build();
     }
