@@ -4,11 +4,7 @@ import com.vv.personal.twm.artifactory.generated.bank.BankProto;
 import com.vv.personal.twm.artifactory.generated.deposit.FixedDepositProto;
 import com.vv.personal.twm.ping.feign.HealthFeign;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author Vivek
@@ -40,7 +36,11 @@ public interface CrdbServiceFeign extends HealthFeign {
     @DeleteMapping("/crdb/bank/fixed-deposits")
     String deleteAllFixedDeposits();
 
-    @PostMapping("/crdb/bank/fixed-deposits/update-by-replacing")
+    @PutMapping("/crdb/bank/fixed-deposits/{fd-number}?active={isActive}")
+    String updateRecordActiveStatus(@PathVariable("fd-number") String fdNumber,
+                                    @PathVariable("isActive") Boolean isActive);
+
+    @PutMapping("/crdb/bank/fixed-deposits")
     String updateRecordByReplacing(@RequestBody FixedDepositProto.FixedDeposit fixedDeposit);
 
     @GetMapping("/crdb/bank/fixed-deposits?field={field}&value={value}")

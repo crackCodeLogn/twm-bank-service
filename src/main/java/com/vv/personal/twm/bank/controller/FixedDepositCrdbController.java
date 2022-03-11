@@ -7,12 +7,7 @@ import com.vv.personal.twm.ping.processor.Pinger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -138,6 +133,22 @@ public class FixedDepositCrdbController {
             return crdbServiceFeign.updateRecordByReplacing(fixedDeposit);
         } catch (Exception e) {
             LOGGER.error("Failed to complete update op for fd key: {}", fdKey);
+        }
+        return "FAILED";
+    }
+
+    @GetMapping("/update/active")
+    public String updateFdActiveStatus(@RequestParam String fdKey,
+                                       @RequestParam Boolean isActive) {
+        LOGGER.info("Received FD-KEY {} to update active status to {}", fdKey, isActive);
+        if (!pinger.allEndPointsActive(crdbServiceFeign)) {
+            LOGGER.error("All end-points not active. Will not trigger op! Check log");
+            return "END-POINTS NOT READY!";
+        }
+        try {
+            return crdbServiceFeign.updateRecordActiveStatus(fdKey, isActive);
+        } catch (Exception e) {
+            LOGGER.error("Failed to complete active status update op for fd key: {}", fdKey);
         }
         return "FAILED";
     }
