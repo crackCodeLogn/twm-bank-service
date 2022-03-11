@@ -7,7 +7,12 @@ import com.vv.personal.twm.ping.processor.Pinger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +77,8 @@ public class FixedDepositCrdbController {
     //read
     @GetMapping("/getFds")
     public FixedDepositProto.FixedDepositList getFdsForApp(@RequestParam(value = "field", defaultValue = "", required = false) String field,
-                                                           @RequestParam(value = "value", required = false) String value) {
+                                                           @RequestParam(value = "value", required = false) String value,
+                                                           @RequestParam(value = "considerActiveFdOnly", defaultValue = "true", required = false) boolean considerActiveFdOnly) {
         LOGGER.info("Received {} to list for field {}", value, field);
         if (!pinger.allEndPointsActive(crdbServiceFeign)) {
             LOGGER.error("All end-points not active. Will not trigger op! Check log");
@@ -80,13 +86,15 @@ public class FixedDepositCrdbController {
         }
         try {
             FixedDepositProto.FixedDepositList retrievedFdList = crdbServiceFeign.getFds(field, value);
+            List<FixedDepositProto.FixedDeposit> fixedDeposits = new ArrayList<>(retrievedFdList.getFixedDepositList());
+            if (considerActiveFdOnly) fixedDeposits = fixedDeposits.stream().filter(FixedDepositProto.FixedDeposit::getIsFdActive).collect(Collectors.toList());
             FixedDepositProto.FixedDepositList.Builder fdBuilderList = FixedDepositProto.FixedDepositList.newBuilder();
-            fdBuilderList.mergeFrom(retrievedFdList);
+            fdBuilderList.addAllFixedDeposit(fixedDeposits);
 
             FixedDepositProto.FixedDeposit.Builder aggregateFdEntry = FixedDepositProto.FixedDeposit.newBuilder();
-            double totalActiveDeposit = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getDepositAmount).sum();
-            double totalExpectedInterest = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedInterest).sum();
-            double totalExpectedAmount = retrievedFdList.getFixedDepositList().stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedAmount).sum();
+            double totalActiveDeposit = fixedDeposits.stream().mapToDouble(FixedDepositProto.FixedDeposit::getDepositAmount).sum();
+            double totalExpectedInterest = fixedDeposits.stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedInterest).sum();
+            double totalExpectedAmount = fixedDeposits.stream().mapToDouble(FixedDepositProto.FixedDeposit::getExpectedAmount).sum();
             aggregateFdEntry.setDepositAmount(totalActiveDeposit);
             aggregateFdEntry.setExpectedAmount(totalExpectedAmount);
             aggregateFdEntry.setExpectedInterest(totalExpectedInterest);
@@ -101,9 +109,10 @@ public class FixedDepositCrdbController {
 
     @GetMapping("/manual/getFds")
     public List<String> getFdsForUser(@RequestParam(value = "field", defaultValue = "", required = false) String field,
-                                      @RequestParam(value = "value", required = false) String value) {
+                                      @RequestParam(value = "value", required = false) String value,
+                                      @RequestParam(value = "considerActiveFdOnly", defaultValue = "true", required = false) boolean considerActiveFdOnly) {
         try {
-            return getFdsForApp(field, value).getFixedDepositList().stream()
+            return getFdsForApp(field, value, considerActiveFdOnly).getFixedDepositList().stream()
                     .map(FixedDepositProto.FixedDeposit::toString)
                     .collect(Collectors.toList());
         } catch (Exception e) {
