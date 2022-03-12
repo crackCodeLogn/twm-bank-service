@@ -7,12 +7,7 @@ import com.vv.personal.twm.ping.processor.Pinger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -165,7 +160,8 @@ public class FixedDepositCrdbController {
     @GetMapping("/annual-breakdown")
     public FixedDepositProto.FixedDepositList generateAnnualBreakdownForExistingFds(@RequestParam(value = "field", defaultValue = "", required = false) String field,
                                                                                     @RequestParam(value = "value", required = false) String value,
-                                                                                    @RequestParam(value = "excludeOnBankIfsc", required = false, defaultValue = "") String excludeOnBankIfsc) {
+                                                                                    @RequestParam(value = "excludeOnBankIfsc", required = false, defaultValue = "") String excludeOnBankIfsc,
+                                                                                    @RequestParam(value = "considerActiveFdOnly", defaultValue = "true", required = false) boolean considerActiveFdOnly) {
         LOGGER.info("Will be generating annual breakdown for FDs matching {} x {} and exempting [{}]", field, value, excludeOnBankIfsc);
         if (!pinger.allEndPointsActive(crdbServiceFeign, calcServiceFeign)) {
             LOGGER.error("All end-points not active. Will not trigger op! Check log");
@@ -173,21 +169,22 @@ public class FixedDepositCrdbController {
         }
         try {
             FixedDepositProto.FixedDepositList retrievedFdList = crdbServiceFeign.getFds(field, value);
+            List<FixedDepositProto.FixedDeposit> fixedDeposits = new ArrayList<>(retrievedFdList.getFixedDepositList());
+            if (considerActiveFdOnly) fixedDeposits = fixedDeposits.stream().filter(FixedDepositProto.FixedDeposit::getIsFdActive).collect(Collectors.toList());
             FixedDepositProto.FixedDepositList.Builder fdBuilderList = FixedDepositProto.FixedDepositList.newBuilder();
 
-            retrievedFdList.getFixedDepositList()
-                    .forEach(fixedDeposit -> {
-                        if (!fixedDeposit.getBankIFSC().matches(excludeOnBankIfsc)) {
-                            FixedDepositProto.FixedDeposit.Builder fdBuilder = FixedDepositProto.FixedDeposit.newBuilder();
-                            fdBuilder.mergeFrom(fixedDeposit);
-                            FixedDepositProto.AnnualBreakdownList annualBreakdownList = calcServiceFeign.calcFixedDepositAnnualBreakdown(fixedDeposit.getDepositAmount(),
-                                    fixedDeposit.getRateOfInterest(), fixedDeposit.getStartDate(), fixedDeposit.getEndDate());
-                            fdBuilder.setAnnualBreakdownList(annualBreakdownList);
-                            fdBuilderList.addFixedDeposit(fdBuilder.build());
-                        } else {
-                            LOGGER.info("Exempting FD '{}' as it's IFSC '{}' is to be exempted on basis of [{}]", fixedDeposit.getFdNumber(), fixedDeposit.getBankIFSC(), excludeOnBankIfsc);
-                        }
-                    });
+            fixedDeposits.forEach(fixedDeposit -> {
+                if (!fixedDeposit.getBankIFSC().matches(excludeOnBankIfsc)) {
+                    FixedDepositProto.FixedDeposit.Builder fdBuilder = FixedDepositProto.FixedDeposit.newBuilder();
+                    fdBuilder.mergeFrom(fixedDeposit);
+                    FixedDepositProto.AnnualBreakdownList annualBreakdownList = calcServiceFeign.calcFixedDepositAnnualBreakdown(fixedDeposit.getDepositAmount(),
+                            fixedDeposit.getRateOfInterest(), fixedDeposit.getStartDate(), fixedDeposit.getEndDate());
+                    fdBuilder.setAnnualBreakdownList(annualBreakdownList);
+                    fdBuilderList.addFixedDeposit(fdBuilder.build());
+                } else {
+                    LOGGER.info("Exempting FD '{}' as it's IFSC '{}' is to be exempted on basis of [{}]", fixedDeposit.getFdNumber(), fixedDeposit.getBankIFSC(), excludeOnBankIfsc);
+                }
+            });
 
             LOGGER.info("Computed annual breakdown for {} FDs", fdBuilderList.getFixedDepositCount());
             LOGGER.info(fdBuilderList.toString()); //TODO - demote to debug later
@@ -201,8 +198,9 @@ public class FixedDepositCrdbController {
     @GetMapping("/manual/annual-breakdown")
     public List<String> generateAnnualBreakdownForExistingFdsManually(@RequestParam(value = "field", defaultValue = "", required = false) String field,
                                                                       @RequestParam(value = "value", required = false) String value,
-                                                                      @RequestParam(value = "excludeOnBankIfsc", required = false, defaultValue = "") String excludeOnBankIfsc) {
-        return generateAnnualBreakdownForExistingFds(field, value, excludeOnBankIfsc).getFixedDepositList().stream()
+                                                                      @RequestParam(value = "excludeOnBankIfsc", required = false, defaultValue = "") String excludeOnBankIfsc,
+                                                                      @RequestParam(value = "considerActiveFdOnly", defaultValue = "true", required = false) boolean considerActiveFdOnly) {
+        return generateAnnualBreakdownForExistingFds(field, value, excludeOnBankIfsc, considerActiveFdOnly).getFixedDepositList().stream()
                 .map(FixedDepositProto.FixedDeposit::toString).collect(Collectors.toList());
     }
 
