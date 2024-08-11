@@ -2,7 +2,7 @@ package com.vv.personal.twm.bank.feign;
 
 import com.vv.personal.twm.artifactory.generated.bank.BankProto;
 import com.vv.personal.twm.artifactory.generated.deposit.FixedDepositProto;
-import com.vv.personal.twm.ping.feign.HealthFeign;
+import com.vv.personal.twm.ping.remote.feign.PingFeign;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @since 16/11/20
  */
 @FeignClient("twm-mongo-service")
-public interface MongoServiceFeign extends HealthFeign {
+public interface MongoServiceFeign extends PingFeign {
 
     @PostMapping("/mongo/bank/addBank")
     String addBank(@RequestBody BankProto.Bank newBank);
