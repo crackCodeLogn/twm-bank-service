@@ -130,9 +130,11 @@ public class FixedDepositCrdbController {
                     .get(0);
 
             String endDate = calcServiceFeign.calcEndDate(fixedDeposit.getStartDate(), fixedDeposit.getMonths(), fixedDeposit.getDays());
-            FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcFixedDepositAmountAndInterest(fixedDeposit.getDepositAmount(),
-                    fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays());
-            fixedDeposit = compAndMerge(fixedDeposit, computedAmountDetails, endDate);
+            if (fixedDeposit.getFreeze() == 0) { // if total Amount and interest calc is NOT FROZEN
+                FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcFixedDepositAmountAndInterest(fixedDeposit.getDepositAmount(),
+                        fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays());
+                fixedDeposit = compAndMerge(fixedDeposit, computedAmountDetails, endDate);
+            }
 
             LOGGER.info("Going for crdb updation now for key: {}", fdKey);
             return crdbServiceFeign.updateRecordByReplacing(fixedDeposit);
