@@ -82,7 +82,8 @@ public class FixedDepositCrdbController {
         try {
             FixedDepositProto.FixedDepositList retrievedFdList = crdbServiceFeign.getFds(field, value);
             List<FixedDepositProto.FixedDeposit> fixedDeposits = new ArrayList<>(retrievedFdList.getFixedDepositList());
-            if (considerActiveFdOnly) fixedDeposits = fixedDeposits.stream().filter(FixedDepositProto.FixedDeposit::getIsFdActive).collect(Collectors.toList());
+            if (considerActiveFdOnly)
+                fixedDeposits = fixedDeposits.stream().filter(FixedDepositProto.FixedDeposit::getIsFdActive).collect(Collectors.toList());
             FixedDepositProto.FixedDepositList.Builder fdBuilderList = FixedDepositProto.FixedDepositList.newBuilder();
             fdBuilderList.addAllFixedDeposit(fixedDeposits);
 
@@ -157,6 +158,37 @@ public class FixedDepositCrdbController {
         return "FAILED";
     }
 
+    @GetMapping("/freeze/totalAmount")
+    public String freezeTotalAmount(@RequestParam String fdKey,
+                                    @RequestParam Double totalAmount) {
+        LOGGER.info("Received FD-KEY {} to freeze total amount to {}", fdKey, totalAmount);
+        if (!pinger.allEndPointsActive(crdbServiceFeign)) {
+            LOGGER.error("All end-points not active. Will not trigger op! Check log");
+            return "END-POINTS NOT READY!";
+        }
+        try {
+            return crdbServiceFeign.freezeTotalAmount(fdKey, totalAmount);
+        } catch (Exception e) {
+            LOGGER.error("Failed to complete freeze total amount op for fd key: {}", fdKey);
+        }
+        return "FAILED";
+    }
+
+    @GetMapping("/expire/nr")
+    public String freezeTotalAmount(@RequestParam String fdKey) {
+        LOGGER.info("Received FD-KEY {} to mark for expiry", fdKey);
+        if (!pinger.allEndPointsActive(crdbServiceFeign)) {
+            LOGGER.error("All end-points not active. Will not trigger op! Check log");
+            return "END-POINTS NOT READY!";
+        }
+        try {
+            return crdbServiceFeign.expireNrFd(fdKey);
+        } catch (Exception e) {
+            LOGGER.error("Failed to complete expiry op for fd key: {}", fdKey);
+        }
+        return "FAILED";
+    }
+
     @GetMapping("/annual-breakdown")
     public FixedDepositProto.FixedDepositList generateAnnualBreakdownForExistingFds(@RequestParam(value = "field", defaultValue = "", required = false) String field,
                                                                                     @RequestParam(value = "value", required = false) String value,
@@ -170,7 +202,8 @@ public class FixedDepositCrdbController {
         try {
             FixedDepositProto.FixedDepositList retrievedFdList = crdbServiceFeign.getFds(field, value);
             List<FixedDepositProto.FixedDeposit> fixedDeposits = new ArrayList<>(retrievedFdList.getFixedDepositList());
-            if (considerActiveFdOnly) fixedDeposits = fixedDeposits.stream().filter(FixedDepositProto.FixedDeposit::getIsFdActive).collect(Collectors.toList());
+            if (considerActiveFdOnly)
+                fixedDeposits = fixedDeposits.stream().filter(FixedDepositProto.FixedDeposit::getIsFdActive).collect(Collectors.toList());
             FixedDepositProto.FixedDepositList.Builder fdBuilderList = FixedDepositProto.FixedDepositList.newBuilder();
 
             fixedDeposits.forEach(fixedDeposit -> {

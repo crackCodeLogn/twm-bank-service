@@ -40,6 +40,13 @@ public interface CrdbServiceFeign extends PingFeign {
     String updateRecordActiveStatus(@PathVariable("fd-number") String fdNumber,
                                     @PathVariable("isActive") Boolean isActive);
 
+    @PutMapping("/crdb/bank/fixed-deposits/{fd-number}/freeze?totalAmount={totalAmount}")
+    String freezeTotalAmount(@PathVariable("fd-number") String fdNumber,
+                             @PathVariable("totalAmount") Double totalAmount);
+
+    @PutMapping("/crdb/bank/fixed-deposits/{fd-number}/expire/nr")
+    String expireNrFd(@PathVariable("fd-number") String fdNumber);
+
     @PutMapping("/crdb/bank/fixed-deposits")
     String updateRecordByReplacing(@RequestBody FixedDepositProto.FixedDeposit fixedDeposit);
 
