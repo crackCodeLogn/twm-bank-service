@@ -13,11 +13,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient("twm-calc-service")
 public interface CalcServiceFeign extends PingFeign {
 
-    @GetMapping("/calc/bank/fd/amount-interest?depositAmount={depositAmount}&rateOfInterest={rateOfInterest}&months={months}&days={days}")
+    @GetMapping("/calc/bank/fd/amount-interest?depositAmount={depositAmount}&rateOfInterest={rateOfInterest}&months={months}&days={days}&accountType={accountType}")
     FixedDepositProto.FixedDeposit calcFixedDepositAmountAndInterest(@PathVariable Double depositAmount,
                                                                      @PathVariable Double rateOfInterest,
                                                                      @PathVariable Integer months,
-                                                                     @PathVariable Integer days);
+                                                                     @PathVariable Integer days,
+                                                                     @PathVariable Integer accountType);
 
     @GetMapping("/calc/bank/fd/end-date?startDate={startDate}&months={months}&days={days}")
     String calcEndDate(@PathVariable("startDate") String startDate,

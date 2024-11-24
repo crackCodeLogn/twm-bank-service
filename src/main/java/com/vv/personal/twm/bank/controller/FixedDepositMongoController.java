@@ -7,12 +7,7 @@ import com.vv.personal.twm.ping.processor.Pinger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +42,7 @@ public class FixedDepositMongoController {
 
         LOGGER.info("Calculating expected interest and amount for new FD");
         FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcFixedDepositAmountAndInterest(newFixedDeposit.getDepositAmount(),
-                newFixedDeposit.getRateOfInterest(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
+                newFixedDeposit.getRateOfInterest(), newFixedDeposit.getMonths(), newFixedDeposit.getDays(), newFixedDeposit.getAccountTypeValue());
         newFixedDeposit = compAndMerge(newFixedDeposit, computedAmountDetails, endDate);
 
         LOGGER.info("Received new FD to be added to Mongo: {}", newFixedDeposit);
@@ -131,7 +126,8 @@ public class FixedDepositMongoController {
 
             String endDate = calcServiceFeign.calcEndDate(fixedDeposit.getStartDate(), fixedDeposit.getMonths(), fixedDeposit.getDays());
             FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcFixedDepositAmountAndInterest(fixedDeposit.getDepositAmount(),
-                    fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays());
+                    fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays(),
+                    fixedDeposit.getAccountTypeValue());
             fixedDeposit = compAndMerge(fixedDeposit, computedAmountDetails, endDate);
 
             LOGGER.info("Going for mongo updation now for key: {}", fdKey);

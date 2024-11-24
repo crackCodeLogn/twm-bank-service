@@ -42,7 +42,8 @@ public class FixedDepositCrdbController {
 
         LOGGER.info("Calculating expected interest and amount for new FD");
         FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcFixedDepositAmountAndInterest(newFixedDeposit.getDepositAmount(),
-                newFixedDeposit.getRateOfInterest(), newFixedDeposit.getMonths(), newFixedDeposit.getDays());
+                newFixedDeposit.getRateOfInterest(), newFixedDeposit.getMonths(), newFixedDeposit.getDays(),
+                newFixedDeposit.getAccountTypeValue());
         newFixedDeposit = compAndMerge(newFixedDeposit, computedAmountDetails, endDate);
 
         LOGGER.info("Received new FD to be added to crdb: {}", newFixedDeposit);
@@ -132,7 +133,7 @@ public class FixedDepositCrdbController {
             String endDate = calcServiceFeign.calcEndDate(fixedDeposit.getStartDate(), fixedDeposit.getMonths(), fixedDeposit.getDays());
             if (fixedDeposit.getFreeze() == 0) { // if total Amount and interest calc is NOT FROZEN
                 FixedDepositProto.FixedDeposit computedAmountDetails = calcServiceFeign.calcFixedDepositAmountAndInterest(fixedDeposit.getDepositAmount(),
-                        fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays());
+                        fixedDeposit.getRateOfInterest(), fixedDeposit.getMonths(), fixedDeposit.getDays(), fixedDeposit.getAccountTypeValue());
                 fixedDeposit = compAndMerge(fixedDeposit, computedAmountDetails, endDate);
             }
 
