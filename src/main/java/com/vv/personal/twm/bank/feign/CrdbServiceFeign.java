@@ -53,4 +53,27 @@ public interface CrdbServiceFeign extends PingFeign {
     @GetMapping("/crdb/bank/fixed-deposits?field={field}&value={value}")
     FixedDepositProto.FixedDepositList getFds(@PathVariable("field") String field,
                                               @PathVariable("value") String value);
+
+    @PostMapping("/crdb/bank/bank-account")
+    String addBankAccount(@RequestBody BankProto.BankAccount newBankAccount);
+
+    @PostMapping("/crdb/bank/bank-accounts")
+    String addBankAccounts(@RequestBody BankProto.BankAccounts newBankAccounts);
+
+    @GetMapping("/crdb/bank/bank-accounts")
+    BankProto.BankAccounts getBankAccounts(@RequestParam("field") String field,
+                                           @RequestParam("value") String value);
+
+    @GetMapping("/crdb/bank/bank-account/{id}")
+    BankProto.BankAccount getBankAccount(@PathVariable("id") String id);
+
+    @GetMapping("/crdb/bank/bank-account/{id}/balance")
+    BankProto.BankAccount getBankAccountBalance(@PathVariable("id") String id);
+
+    @PatchMapping("/crdb/bank/bank-account/{id}/balance")
+    boolean updateBankAccountBalance(@PathVariable("id") String id,
+                                     @RequestBody BankProto.BankAccount bankAccount);
+
+    @DeleteMapping("/crdb/bank/bank-account/{id}")
+    String deleteBankAccount(@PathVariable("id") String id);
 }
