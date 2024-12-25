@@ -43,7 +43,7 @@ public class BankAccountController {
         return crdbServiceFeign.getBankAccountBalance(id);
     }
 
-    @PatchMapping("/bank-account/{id}/balance")
+    @PostMapping("/bank-account/{id}/balance")
     boolean updateBankAccountBalance(@PathVariable("id") String id,
                                      @RequestBody BankProto.BankAccount bankAccount) {
         return crdbServiceFeign.updateBankAccountBalance(id, bankAccount);

@@ -70,7 +70,8 @@ public interface CrdbServiceFeign extends PingFeign {
     @GetMapping("/crdb/bank/bank-account/{id}/balance")
     BankProto.BankAccount getBankAccountBalance(@PathVariable("id") String id);
 
-    @PatchMapping("/crdb/bank/bank-account/{id}/balance")
+    // Should be PATCH, but apparently its non-standard for feign, thus falling back to POST
+    @PostMapping("/crdb/bank/bank-account/{id}/balance")
     boolean updateBankAccountBalance(@PathVariable("id") String id,
                                      @RequestBody BankProto.BankAccount bankAccount);
 
